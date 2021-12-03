@@ -6,8 +6,15 @@ export function activate(context: vscode.ExtensionContext) {
 	// Array of top level patterns
 	// Patterns can have child patterns that are only run on matches
 	// Flag to move cursor
-	// Flag for it a pattern ends processing? Or do all top level patterns end processing,
+	// Flag for if a pattern ends processing? Or do all top level patterns end processing,
 	//	and child patterns do not? Probably better to have a flag for more control.
+	// Load from json
+	// Language identifier - replacement as a language => string map?
+	//	- need to have a generic fallthrough match as well, maybe '*'?
+	// Toggle in the UI to turn ReLine on or off - should probably be saved per editor
+	// Command to toggle ReLine + a hotkey
+	// Option to set if it starts enabled or disabled
+
 	const patterns = [
 		{ regex: /(\s*)for\s*([a-z]+)\s*in\s*([0-9]+)\s*to\s*([0-9]+)/, replacement: '$1for (int $2 = $3; $2 <= $4; $2++) {\n$1\t\n$1}' },
 		{ regex: /.*/, replacement: '$&; //yay\n\n\n[after]' },
