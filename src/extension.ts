@@ -1,57 +1,53 @@
 import * as vscode from 'vscode';
 
-export function activate(context: vscode.ExtensionContext) {
-	console.log('ReLine activated.');
+// Toggle in the UI to turn ReLine on or off - should probably be saved per editor
 
-	// Array of top level patterns
-	//   endProcessing and moveCursor should be on the array of top level patterns
-	//   Patterns can have child patterns that are only run on matches
-	// Load from json
-	// Toggle in the UI to turn ReLine on or off - should probably be saved per editor
-	// Command to toggle ReLine + a hotkey
-	// Option to set if it starts enabled or disabled
-
-	const patterns: {
+const _state: {
+	config: any;
+	enabled: WeakMap<vscode.TextEditor, boolean>;
+	patterns: {
 		match: RegExp;
 		replacement: {
 			[key: string]: {
-				value: string;
+				value: (...m: any[]) => string;
 				moveCursor?: boolean;
 			};
 		};
-	}[] = [
-			{
-				match: /(\s*)for\s*([a-z]+)\s*in\s*([0-9]+)\s*to\s*([0-9]+)/,
-				replacement: {
-					plaintext: { value: '$1for (int $2 = $3; $2 <= $4; $2++) {\n$1\t\n$1}', moveCursor: true },
-					_: { value: 'nah' }
-				}
-			},
-			{
-				match: /.*/,
-				replacement: {
-					plaintext: { value: '$&; // yay' },
-					markdown: { value: '$&' },
-					_: { value: '**$&**' }
-				}
-			},
-		];
+	}[]
+} = {
+	config:{},
+	enabled: new WeakMap<vscode.TextEditor, boolean>(),
+	patterns: []
+};
 
-	let disposable = vscode.commands.registerTextEditorCommand('type', async (editor: vscode.TextEditor, _edit: vscode.TextEditorEdit, args: { text: string }) => {
+export function activate(context: vscode.ExtensionContext) {
+	console.log('ReLine activated.');
+
+	loadConfig();
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('reline.toggle', toggleEnabled),
+		vscode.commands.registerTextEditorCommand('type', type),
+
+		vscode.workspace.onDidChangeConfiguration(loadConfig)
+	);
+}
+
+async function type(editor: vscode.TextEditor, _edit: vscode.TextEditorEdit, args: { text: string }): Promise<void> {
+	if (getEnabled(editor)) {
 		// Process on enter.
 		if (args.text === '\r' || args.text === '\n' || args.text === '\r\n') {
 			// Track if any of the matched patterns have moveCursor set.
 			let moveCursor: boolean = false;
 			const lang: string = editor.document.languageId;
-			const wsEdit: vscode.WorkspaceEdit = new vscode.WorkspaceEdit();
 
+			let edits: vscode.TextEdit[] = [];
 			// For each of the selections get all TextEdits.
-			wsEdit.set(editor.document.uri, editor.selections.map(selection => {
-				let edits: vscode.TextEdit[] = [];
+			for (let selection of editor.selections) {
 				// Process all lines for the selection.
 				for (let i = selection.start.line; i <= selection.end.line; i++) {
 					const line = editor.document.lineAt(i);
-					for (let pattern of patterns) {
+					for (let pattern of _state.patterns) {
 						// If the pattern is defined for the selected language or _ (all languages), try to replace the text.
 						const replacement = pattern.replacement[lang] || pattern.replacement._;
 						if (replacement) {
@@ -71,10 +67,12 @@ export function activate(context: vscode.ExtensionContext) {
 						}
 					}
 				}
-				return edits;
-			}).flat());
+			}
+
 			// If there are edits then apply them.
-			if (wsEdit.size > 0) {
+			if (edits.length > 0) {
+				const wsEdit = new vscode.WorkspaceEdit();
+				wsEdit.set(editor.document.uri, edits);
 				await vscode.workspace.applyEdit(wsEdit);
 				// Move the cursor to the end of the previous blank line.
 				if (moveCursor) {
@@ -85,11 +83,37 @@ export function activate(context: vscode.ExtensionContext) {
 				return;
 			}
 		}
-		// We didn't change anything, so process the key normally.
-		return vscode.commands.executeCommand('default:type', args);
-	});
-
-	context.subscriptions.push(disposable);
+	}
+	// We didn't change anything, so process the key normally.
+	return vscode.commands.executeCommand('default:type', args);
 }
 
-export function deactivate() { }
+function getEnabled(editor: vscode.TextEditor): boolean {
+	if (!_state.enabled.has(editor)) {
+		_state.enabled.set(editor, _state.config.enabledByDefault);
+	}
+	return <boolean>_state.enabled.get(editor);
+}
+
+function toggleEnabled(): void {
+	const editor = vscode.window.activeTextEditor;
+	if (editor) {
+		const enabled = getEnabled(editor);
+		_state.enabled.set(editor, !enabled);
+	}
+}
+
+function loadConfig(): void {
+	_state.config = vscode.workspace.getConfiguration("reline");
+
+	loadPatterns();
+}
+
+async function loadPatterns(): Promise<void> {
+	_state.patterns = [];
+	const patternNames: string[] = _state.config.patterns.split(/[,;]/);
+	for (let p of patternNames) {
+		const loaded = await import(`./patterns/${p.trim()}`);
+		_state.patterns = _state.patterns.concat(loaded.default.patterns);
+	}
+}
