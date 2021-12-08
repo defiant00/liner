@@ -2,7 +2,7 @@
 	"name": "reline",
 	"displayName": "ReLine",
 	"description": "",
-	"version": "0.8.0",
+	"version": "1.0.0",
 	"engines": {
 		"vscode": "^1.62.0"
 	},

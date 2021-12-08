@@ -1,34 +1,43 @@
 import * as vscode from 'vscode';
 
-// Toggle in the UI to turn ReLine on or off - should probably be saved per editor
-
 const _state: {
 	config: any;
-	enabled: WeakMap<vscode.TextEditor, boolean>;
+	enabled: WeakMap<vscode.Uri, boolean>;
+	statusBar: any;
 	patterns: {
 		match: RegExp;
 		replacement: {
 			[key: string]: {
 				value: (...m: any[]) => string;
-				moveCursor?: boolean;
+				moveCursor: boolean;
 			};
 		};
 	}[]
 } = {
-	config:{},
-	enabled: new WeakMap<vscode.TextEditor, boolean>(),
+	config: {},
+	enabled: new WeakMap<vscode.Uri, boolean>(),
+	statusBar: {},
 	patterns: []
 };
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('ReLine activated.');
 
+	const toggle: string = 'reline.toggle';
+
+	let statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 500);
+	statusBar.command = toggle;
+	_state.statusBar = statusBar;
+
 	loadConfig();
+	updateStatusBar();
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('reline.toggle', toggleEnabled),
+		vscode.commands.registerCommand(toggle, toggleEnabled),
 		vscode.commands.registerTextEditorCommand('type', type),
 
+		statusBar,
+		vscode.window.onDidChangeActiveTextEditor(updateStatusBar),
 		vscode.workspace.onDidChangeConfiguration(loadConfig)
 	);
 }
@@ -58,7 +67,7 @@ async function type(editor: vscode.TextEditor, _edit: vscode.TextEditorEdit, arg
 									newVal += args.text;
 								}
 								// Track whether any pattern has the moveCursor flag set.
-								moveCursor ||= replacement.moveCursor ?? false;
+								moveCursor ||= replacement.moveCursor;
 								// Delete the existing line and then insert the new value to make the cursor behave consistently.
 								edits.push(vscode.TextEdit.delete(line.range));
 								edits.push(vscode.TextEdit.insert(line.range.start, newVal));
@@ -89,17 +98,30 @@ async function type(editor: vscode.TextEditor, _edit: vscode.TextEditorEdit, arg
 }
 
 function getEnabled(editor: vscode.TextEditor): boolean {
-	if (!_state.enabled.has(editor)) {
-		_state.enabled.set(editor, _state.config.enabledByDefault);
+	if (!_state.enabled.has(editor.document.uri)) {
+		_state.enabled.set(editor.document.uri, _state.config.enabledByDefault);
 	}
-	return <boolean>_state.enabled.get(editor);
+	return <boolean>_state.enabled.get(editor.document.uri);
 }
 
 function toggleEnabled(): void {
 	const editor = vscode.window.activeTextEditor;
 	if (editor) {
-		const enabled = getEnabled(editor);
-		_state.enabled.set(editor, !enabled);
+		const enabled: boolean = getEnabled(editor);
+		_state.enabled.set(editor.document.uri, !enabled);
+
+		updateStatusBar();
+	}
+}
+
+function updateStatusBar(): void {
+	const editor = vscode.window.activeTextEditor;
+	if (editor) {
+		const enabled: boolean = getEnabled(editor);
+		_state.statusBar.text = `ReLine ${enabled ? 'On' : 'Off'}`;
+		_state.statusBar.show();
+	} else {
+		_state.statusBar.hide();
 	}
 }
 
