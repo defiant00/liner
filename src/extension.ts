@@ -21,9 +21,9 @@ const _state: {
 };
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log('UpLine activated.');
+	console.log('Liner activated.');
 
-	const toggle: string = 'upline.toggle';
+	const toggle: string = 'liner.toggle';
 
 	let statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 500);
 	statusBar.command = toggle;
@@ -118,7 +118,7 @@ function updateStatusBar(): void {
 	const editor = vscode.window.activeTextEditor;
 	if (editor) {
 		const enabled: boolean = getEnabled(editor);
-		_state.statusBar.text = `UpLine ${enabled ? 'On' : 'Off'}`;
+		_state.statusBar.text = `Liner ${enabled ? 'On' : 'Off'}`;
 		_state.statusBar.show();
 	} else {
 		_state.statusBar.hide();
@@ -126,7 +126,7 @@ function updateStatusBar(): void {
 }
 
 function loadConfig(): void {
-	_state.config = vscode.workspace.getConfiguration("upline");
+	_state.config = vscode.workspace.getConfiguration('liner');
 
 	loadPatterns();
 }

@@ -1,6 +1,6 @@
 {
-	"name": "upline",
-	"displayName": "UpLine",
+	"name": "liner",
+	"displayName": "Liner",
 	"description": "",
 	"version": "1.0.0",
 	"engines": {
@@ -14,14 +14,14 @@
 	],
 	"contributes": {
 		"configuration": {
-			"title": "UpLine",
+			"title": "Liner",
 			"properties": {
-				"upline.enabledByDefault": {
+				"liner.enabledByDefault": {
 					"type": "boolean",
 					"default": true,
-					"description": "Enable/disable whether UpLine is active when opening a file."
+					"description": "Enable/disable whether Liner is active when first opening a file."
 				},
-				"upline.patterns": {
+				"liner.patterns": {
 					"type": "string",
 					"default": "alpha-code",
 					"description": "List of patterns to load (comma or semicolon-delimited)."
@@ -30,8 +30,8 @@
 		},
 		"commands": [
 			{
-				"command": "upline.toggle",
-				"title": "Toggle UpLine"
+				"command": "liner.toggle",
+				"title": "Toggle Liner"
 			}
 		]
 	},
