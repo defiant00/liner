@@ -1,6 +1,6 @@
 {
-	"name": "reline",
-	"displayName": "ReLine",
+	"name": "upline",
+	"displayName": "UpLine",
 	"description": "",
 	"version": "1.0.0",
 	"engines": {
@@ -14,14 +14,14 @@
 	],
 	"contributes": {
 		"configuration": {
-			"title": "ReLine",
+			"title": "UpLine",
 			"properties": {
-				"reline.enabledByDefault": {
+				"upline.enabledByDefault": {
 					"type": "boolean",
 					"default": true,
-					"description": "Enable/disable whether ReLine is active when opening a file."
+					"description": "Enable/disable whether UpLine is active when opening a file."
 				},
-				"reline.patterns": {
+				"upline.patterns": {
 					"type": "string",
 					"default": "alpha-code",
 					"description": "List of patterns to load (comma or semicolon-delimited)."
@@ -30,8 +30,8 @@
 		},
 		"commands": [
 			{
-				"command": "reline.toggle",
-				"title": "Toggle ReLine"
+				"command": "upline.toggle",
+				"title": "Toggle UpLine"
 			}
 		]
 	},

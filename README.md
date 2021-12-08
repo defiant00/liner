@@ -1,6 +1,6 @@
-# reline README
+# upline README
 
-This is the README for your extension "reline". After writing up a brief description, we recommend including the following sections.
+This is the README for your extension "upline". After writing up a brief description, we recommend including the following sections.
 
 ## Features
 
