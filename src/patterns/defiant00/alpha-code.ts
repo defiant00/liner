@@ -11,25 +11,31 @@ export default class {
             {
                 match: /^(\s*)for\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+in\s+(.+)\s+to\s+(.+)$/,
                 replacement: {
-                    typescript: { value: (...m) => `${m[1]}for (let ${m[2]} = ${format(m[3])}; ${m[2]} <= ${format(m[4])}; ${m[2]}++) {\n${m[1]}\t\n${m[1]}}`, moveCursor: true },
+                    typescript: { value: (...m) => `${m[1]}for (let ${m[2]} = ${formatTs(m[3])}; ${m[2]} <= ${formatTs(m[4])}; ${m[2]}++) {\n${m[1]}\t\n${m[1]}}`, moveCursor: true },
                 }
             },
             {
-                match: /^(\s*)if\s+([^(].*)$/,
+                match: /^(\s*)if\s+([^{]*)$/,
                 replacement: {
-                    typescript: { value: (...m) => `${m[1]}if (${format(m[2])}) {\n${m[1]}\t\n${m[1]}}`, moveCursor: true },
+                    typescript: { value: (...m) => `${m[1]}if (${formatTs(m[2])}) {\n${m[1]}\t\n${m[1]}}`, moveCursor: true },
+                }
+            },
+            {
+                match: /^(\s*)(.*)\/$/,
+                replacement: {
+                    typescript: {value: (...m) => `${m[1]}${formatTs(m[2])} {\n${m[1]}\t\n${m[1]}}`, moveCursor: true },
                 }
             },
             {
                 match: /.*/,
                 replacement: {
-                    typescript: { value: (...m) => format(m[0]), moveCursor: false }
+                    typescript: { value: (...m) => formatTs(m[0]), moveCursor: false }
                 }
             }
         ];
 }
 
-function format(val: string): string {
+function formatTs(val: string): string {
     return val
         .replace(/\band\b/g, '&&')
         .replace(/\bor\b/g, '||')

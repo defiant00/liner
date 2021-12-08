@@ -1,70 +1,33 @@
-# liner README
+# Liner
 
-This is the README for your extension "liner". After writing up a brief description, we recommend including the following sections.
+Liner is a line matching engine that lets you define regular expressions and replacement patterns that are automatically applied when you hit **Enter** in VS Code.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+Liner lets you import as many pattern libraries as you like, and checks the current line against all imported patterns until it finds a match. If a match is found, the pattern defines how to manipulate the line, using both regex capture groups and custom Javascript. Patterns are defined per language, allowing for a standardized set of enhancements even if the desired output is different per language.
 
-For example if there is an image subfolder under your extension project workspace:
+Patterns can be single or multiline. A single line pattern will do the replacement and then move to the next line as per a normal **Enter** press. A multiline pattern will place the cursor on the last line that only contains whitespace.
 
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+To trigger Liner:
+* Hit **Enter** on a line
+  * If a match is found, Liner behaves the same regardless of where the cursor is.
+  * If no match is found, normal text input occurs.
+  * Standard VS Code multiple cursors and selections are supported.
+* Select one or more lines and hit **Enter**
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+* `liner.enabledByDefault` - Enable/disable whether Liner is active when first opening a file.
+* `liner.patterns` - List of pattern libraries to load (comma or semicolon-delimited).
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+Liner may conflict with other extensions that intercept individual **type** events.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 1.0.0
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+- Initial version

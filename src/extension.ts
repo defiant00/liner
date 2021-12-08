@@ -4,6 +4,7 @@ const _state: {
 	config: any;
 	enabled: WeakMap<vscode.Uri, boolean>;
 	statusBar: any;
+	channel: any;
 	patterns: {
 		match: RegExp;
 		replacement: {
@@ -17,17 +18,21 @@ const _state: {
 	config: {},
 	enabled: new WeakMap<vscode.Uri, boolean>(),
 	statusBar: {},
+	channel: {},
 	patterns: []
 };
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log('Liner activated.');
-
 	const toggle: string = 'liner.toggle';
 
-	let statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 500);
+	const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 500);
 	statusBar.command = toggle;
 	_state.statusBar = statusBar;
+
+	const channel = vscode.window.createOutputChannel("Liner");
+	_state.channel = channel;
+
+	_state.channel.appendLine("Liner activated.");
 
 	loadConfig();
 	updateStatusBar();
@@ -36,9 +41,11 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(toggle, toggleEnabled),
 		vscode.commands.registerTextEditorCommand('type', type),
 
-		statusBar,
 		vscode.window.onDidChangeActiveTextEditor(updateStatusBar),
-		vscode.workspace.onDidChangeConfiguration(loadConfig)
+		vscode.workspace.onDidChangeConfiguration(loadConfig),
+
+		statusBar,
+		channel,
 	);
 }
 
@@ -127,7 +134,7 @@ function updateStatusBar(): void {
 
 function loadConfig(): void {
 	_state.config = vscode.workspace.getConfiguration('liner');
-
+	_state.channel.appendLine('Configuration loaded.');
 	loadPatterns();
 }
 
@@ -135,7 +142,12 @@ async function loadPatterns(): Promise<void> {
 	_state.patterns = [];
 	const patternNames: string[] = _state.config.patterns.split(/[,;]/);
 	for (let p of patternNames) {
-		const loaded = await import(`./patterns/${p.trim()}`);
-		_state.patterns = _state.patterns.concat(loaded.default.patterns);
+		try {
+			const loaded = await import(`./patterns/${p.trim()}`);
+			_state.channel.appendLine(`${loaded.default.patterns.length} patterns loaded from '${p.trim()}'`);
+			_state.patterns = _state.patterns.concat(loaded.default.patterns);
+		} catch {
+			_state.channel.appendLine(` ** Unable to load pattern library '${p.trim()}'`);
+		}
 	}
 }

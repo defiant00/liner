@@ -1,8 +1,11 @@
 {
 	"name": "liner",
 	"displayName": "Liner",
-	"description": "",
+	"description": "Line matching engine to manipulate text as you enter it.",
 	"version": "1.0.0",
+	"publisher": "defiant00",
+	"license": "MIT",
+	"repository": "https://github.com/defiant00/liner",
 	"engines": {
 		"vscode": "^1.62.0"
 	},
@@ -23,8 +26,8 @@
 				},
 				"liner.patterns": {
 					"type": "string",
-					"default": "alpha-code",
-					"description": "List of patterns to load (comma or semicolon-delimited)."
+					"default": "defiant00/alpha-code",
+					"description": "List of pattern libraries to load (comma or semicolon-delimited)."
 				}
 			}
 		},
