@@ -15,6 +15,17 @@ To trigger Liner:
   * Standard VS Code multiple cursors and selections are supported.
 * Select one or more lines and hit **Enter**
 
+The sample pattern library `defiant00/alpha-code` contains the following patterns for the Typescript language, meant to reduce the number of symbols you have to type:
+* `for [var] in [start] to [finish]` -> `for (let [var] = [start]; [var] < [finish]; var++) { }`
+* `if [condition]` -> `if ([condition]) { }`
+* `[code] /` -> `[code] { }`
+
+As well, the following are replaced inline:
+* `and` -> `&&`
+* `or` -> `||`
+* `eq` -> `===`
+* `neq` -> `!==`
+
 ## Extension Settings
 
 This extension contributes the following settings:
