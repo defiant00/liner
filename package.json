@@ -1,11 +1,12 @@
 {
 	"name": "liner",
 	"displayName": "Liner",
-	"description": "Line matching engine to manipulate text as you enter it.",
+	"description": "Line matching engine for simpler snippets and scriptable line processing.",
 	"version": "1.0.0",
 	"publisher": "defiant00",
 	"license": "MIT",
 	"repository": "https://github.com/defiant00/liner",
+	"icon": "images/logo.png",
 	"engines": {
 		"vscode": "^1.62.0"
 	},
