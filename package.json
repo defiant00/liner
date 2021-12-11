@@ -25,6 +25,11 @@
 					"default": true,
 					"description": "Enable/disable whether Liner is active when first opening a file."
 				},
+				"liner.libraryLocation": {
+					"type": "string",
+					"default": "",
+					"description": "Pattern library location, or 'none' to only use the built-in libraries."
+				},
 				"liner.patterns": {
 					"type": "string",
 					"default": "defiant00/alpha-code",

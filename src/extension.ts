@@ -1,10 +1,11 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 
-const _state: {
-	config: any;
-	enabled: WeakMap<vscode.Uri, boolean>;
-	statusBar: any;
-	channel: any;
+let _state: {
+	config: vscode.WorkspaceConfiguration;
+	enabled: vscode.Memento;
+	statusBar: vscode.StatusBarItem;
+	channel: vscode.OutputChannel;
 	patterns: {
 		match: RegExp;
 		replacement: {
@@ -14,27 +15,40 @@ const _state: {
 			};
 		};
 	}[]
-} = {
-	config: {},
-	enabled: new WeakMap<vscode.Uri, boolean>(),
-	statusBar: {},
-	channel: {},
-	patterns: []
 };
 
 export function activate(context: vscode.ExtensionContext) {
 	const toggle: string = 'liner.toggle';
 
-	const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 500);
-	statusBar.command = toggle;
-	_state.statusBar = statusBar;
-
-	const channel = vscode.window.createOutputChannel("Liner");
-	_state.channel = channel;
+	_state = {
+		config: vscode.workspace.getConfiguration('liner'),
+		enabled: context.workspaceState,
+		statusBar: vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 500),
+		channel: vscode.window.createOutputChannel("Liner"),
+		patterns: []
+	};
+	_state.statusBar.command = toggle;
 
 	_state.channel.appendLine("Liner activated.");
+	_state.channel.appendLine('Configuration loaded.');
 
-	loadConfig();
+	// Library location has not been configured, so ask the user if they would like to set it up.
+	if (!_state.config.libraryLocation) {
+		vscode.window.showInformationMessage('Liner pattern library location has not been configured, would you like to set it now? (you can always change this later under Settings)', 'Yes', 'No', "I don't want a pattern library").then(answer => {
+			if (answer === 'Yes') {
+				vscode.window.showOpenDialog({ canSelectFolders: true, title: 'Select Pattern Library Location' }).then(uris => {
+					if (uris && uris[0]) {
+						_state.config.update('libraryLocation', uris[0].fsPath, true);
+					}
+				});
+			} else if (answer !== 'No') {
+				// The "I don't want a pattern library" option.
+				_state.config.update('libraryLocation', 'none', true);
+			}
+		});
+	}
+
+	loadPatterns();
 	updateStatusBar();
 
 	context.subscriptions.push(
@@ -42,10 +56,11 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerTextEditorCommand('type', type),
 
 		vscode.window.onDidChangeActiveTextEditor(updateStatusBar),
-		vscode.workspace.onDidChangeConfiguration(loadConfig),
+		vscode.workspace.onDidChangeConfiguration(reloadConfig),
+		vscode.workspace.onDidRenameFiles(fileRenamed),
 
-		statusBar,
-		channel,
+		_state.statusBar,
+		_state.channel,
 	);
 }
 
@@ -104,23 +119,26 @@ async function type(editor: vscode.TextEditor, _edit: vscode.TextEditorEdit, arg
 	return vscode.commands.executeCommand('default:type', args);
 }
 
+// Get whether the document in the editor has Liner enabled.
 function getEnabled(editor: vscode.TextEditor): boolean {
-	if (!_state.enabled.has(editor.document.uri)) {
-		_state.enabled.set(editor.document.uri, _state.config.enabledByDefault);
+	if (_state.enabled.get(editor.document.uri.toString()) === undefined) {
+		_state.enabled.update(editor.document.uri.toString(), _state.config.enabledByDefault);
 	}
-	return <boolean>_state.enabled.get(editor.document.uri);
+	return <boolean>_state.enabled.get(editor.document.uri.toString());
 }
 
+// Toggle Liner for the document in the current editor.
 function toggleEnabled(): void {
 	const editor = vscode.window.activeTextEditor;
 	if (editor) {
 		const enabled: boolean = getEnabled(editor);
-		_state.enabled.set(editor.document.uri, !enabled);
+		_state.enabled.update(editor.document.uri.toString(), !enabled);
 
 		updateStatusBar();
 	}
 }
 
+// Update the status bar with Liner's status, or hide it if it is not a text editor.
 function updateStatusBar(): void {
 	const editor = vscode.window.activeTextEditor;
 	if (editor) {
@@ -132,22 +150,49 @@ function updateStatusBar(): void {
 	}
 }
 
-function loadConfig(): void {
+// The enabled flag is tracked by URI, so if it changed then update the flag so Liner
+// being enabled properly follows files when being moved or renamed.
+function fileRenamed(event: vscode.FileRenameEvent): void {
+	for (let file of event.files) {
+		// Don't need to check if this is undefined since setting the value to undefined
+		// clears the value, which is the desired behavior.
+		_state.enabled.update(file.newUri.toString(), _state.enabled.get(file.oldUri.toString()));
+		_state.enabled.update(file.oldUri.toString(), undefined);
+	}
+}
+
+// Reload the configuration and patterns on a settings change.
+function reloadConfig(): void {
 	_state.config = vscode.workspace.getConfiguration('liner');
 	_state.channel.appendLine('Configuration loaded.');
 	loadPatterns();
 }
 
+// Load the patterns.
 async function loadPatterns(): Promise<void> {
 	_state.patterns = [];
 	const patternNames: string[] = _state.config.patterns.split(/[,;]/);
-	for (let p of patternNames) {
-		try {
-			const loaded = await import(`./patterns/${p.trim()}`);
-			_state.channel.appendLine(`${loaded.default.patterns.length} patterns loaded from '${p.trim()}'`);
-			_state.patterns = _state.patterns.concat(loaded.default.patterns);
-		} catch {
-			_state.channel.appendLine(` ** Unable to load pattern library '${p.trim()}'`);
+	for (let patternName of patternNames) {
+		const trimmed = patternName.trim();
+		let loaded;
+		// Try the user's library location first.
+		if (_state.config.libraryLocation && _state.config.libraryLocation !== 'none') {
+			try {
+				loaded = await import(path.join(_state.config.libraryLocation, trimmed));
+				_state.channel.appendLine(`${loaded.patterns.length} pattern(s) loaded from '${trimmed}'`);
+			} catch { }
+		}
+		// Try the built-in library if it wasn't in the user library.
+		if (!loaded) {
+			try {
+				loaded = await import(`./patterns/${trimmed}`);
+				_state.channel.appendLine(`${loaded.patterns.length} built-in pattern(s) loaded from '${trimmed}'`);
+			} catch { }
+		}
+		if (loaded) {
+			_state.patterns = _state.patterns.concat(loaded.patterns);
+		} else {
+			_state.channel.appendLine(` ** Unable to load pattern library '${trimmed}'`);
 		}
 	}
 }
