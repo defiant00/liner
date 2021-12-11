@@ -2,7 +2,7 @@
 	"name": "liner",
 	"displayName": "Liner",
 	"description": "Line matching engine for simpler snippets and scriptable line processing.",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"publisher": "defiant00",
 	"license": "MIT",
 	"repository": "https://github.com/defiant00/liner",

@@ -27,20 +27,16 @@ Liner can be toggled through the `Toggle Liner` command, or by clicking on the s
 ## Sample Pattern Library
 
 The sample pattern library `defiant00/alpha-code` contains the following patterns for the Javascript and Typescript languages, meant to reduce the number of symbols you have to type:
-Input | Output 
---- | ---
-`for [var] in [start] to [finish]` | `for (let [var] = [start]; [var] < [finish]; var++) { }`
-`if [condition]` | `if ([condition]) { }`
-`while [condition]` | `while ([condition]) { }`
-`[code] /` | `[code] { }`
+* `for [var] in [start] to [finish]` -> `for (let [var] = [start]; [var] < [finish]; var++) { }`
+* `if [condition]` -> `if ([condition]) { }`
+* `while [condition]` -> `while ([condition]) { }`
+* `[code] /` -> `[code] { }`
 
 As well, the following are replaced inline:
-Input | Output
---- | ---
-`and` | `&&`
-`or` | `\|\|`
-`eq` | `===`
-`neq` | `!==`
+* `and` -> `&&`
+* `or` -> `\|\|`
+* `eq` -> `===`
+* `neq` -> `!==`
 
 ## Extension Settings
 
@@ -82,12 +78,19 @@ A pattern library should export an array of patterns named `patterns` containing
 
 If you entered `"for x in 1 to 3"` using `defiant00/alpha-code`, the output would be (with `|` indicating the cursor):
 
-moveCursor false | moveCursor true
---- | ---
-`for (let x = 1; x < 3; x++) {` | `for (let x = 1; x < 3; x++) {`
-` ` | `\|`  <- (moved up) 
-`}` | `}`
-`\|` <- (at the end) | ` `
+**moveCursor false**
+```
+for (let x = 1; x < 3; x++) {
+
+}
+| <- (at the end)
+```
+**moveCursor true**
+```
+for (let x = 1; x < 3; x++) {
+    | <- (moved up)
+}
+```
 ## Contributing
 
 Bug fixes and new pattern libraries are both welcome, please send a pull request!
@@ -97,6 +100,10 @@ Bug fixes and new pattern libraries are both welcome, please send a pull request
 Liner may conflict with other extensions that intercept individual **type** events.
 
 ## Release Notes
+
+### 1.0.1
+
+* Documentation cleanup and added images
 
 ### 1.0.0
 
