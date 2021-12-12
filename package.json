@@ -2,7 +2,7 @@
 	"name": "liner",
 	"displayName": "Liner",
 	"description": "Line matching engine for simpler snippets and scriptable line processing.",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"publisher": "defiant00",
 	"license": "MIT",
 	"repository": "https://github.com/defiant00/liner",
@@ -25,22 +25,30 @@
 					"default": true,
 					"description": "Enable/disable whether Liner is active when first opening a file."
 				},
-				"liner.libraryLocation": {
-					"type": "string",
-					"default": "",
-					"description": "Pattern library location, or 'none' to only use the built-in libraries."
-				},
 				"liner.patterns": {
 					"type": "string",
 					"default": "defiant00/alpha-code",
 					"description": "List of pattern libraries to load (comma or semicolon-delimited)."
+				},
+				"liner.libraryLocation": {
+					"type": "string",
+					"default": "",
+					"description": "Pattern library location, or 'none' to only use the built-in libraries. (use the Liner: Set Library Location command if you'd prefer a folder picker)"
 				}
 			}
 		},
 		"commands": [
 			{
 				"command": "liner.toggle",
-				"title": "Toggle Liner"
+				"title": "Liner: Toggle"
+			},
+			{
+				"command": "liner.reload",
+				"title": "Liner: Reload Patterns"
+			},
+			{
+				"command": "liner.setLibrary",
+				"title": "Liner: Set Pattern Library Location"
 			}
 		]
 	},

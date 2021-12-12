@@ -1,6 +1,11 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
+const TOGGLE_COMMAND: string = 'liner.toggle';
+const RELOAD_COMMAND: string = 'liner.reload';
+const SET_LIBRARY_COMMAND: string = 'liner.setLibrary';
+const NO_LOCATION: string = 'none';
+
 let _state: {
 	config: vscode.WorkspaceConfiguration;
 	enabled: vscode.Memento;
@@ -18,8 +23,6 @@ let _state: {
 };
 
 export function activate(context: vscode.ExtensionContext) {
-	const toggle: string = 'liner.toggle';
-
 	_state = {
 		config: vscode.workspace.getConfiguration('liner'),
 		enabled: context.workspaceState,
@@ -27,32 +30,23 @@ export function activate(context: vscode.ExtensionContext) {
 		channel: vscode.window.createOutputChannel("Liner"),
 		patterns: []
 	};
-	_state.statusBar.command = toggle;
+	_state.statusBar.command = TOGGLE_COMMAND;
 
 	_state.channel.appendLine("Liner activated.");
 	_state.channel.appendLine('Configuration loaded.');
 
 	// Library location has not been configured, so ask the user if they would like to set it up.
 	if (!_state.config.libraryLocation) {
-		vscode.window.showInformationMessage('Liner pattern library location has not been configured, would you like to set it now? (you can always change this later under Settings)', 'Yes', 'No', "I don't want a pattern library").then(answer => {
-			if (answer === 'Yes') {
-				vscode.window.showOpenDialog({ canSelectFolders: true, title: 'Select Pattern Library Location' }).then(uris => {
-					if (uris && uris[0]) {
-						_state.config.update('libraryLocation', uris[0].fsPath, true);
-					}
-				});
-			} else if (answer !== 'No') {
-				// The "I don't want a pattern library" option.
-				_state.config.update('libraryLocation', 'none', true);
-			}
-		});
+		promptLibraryLocation();
 	}
 
 	loadPatterns();
 	updateStatusBar();
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand(toggle, toggleEnabled),
+		vscode.commands.registerCommand(TOGGLE_COMMAND, toggleEnabled),
+		vscode.commands.registerCommand(RELOAD_COMMAND, loadPatterns),
+		vscode.commands.registerCommand(SET_LIBRARY_COMMAND, promptLibraryLocation),
 		vscode.commands.registerTextEditorCommand('type', type),
 
 		vscode.window.onDidChangeActiveTextEditor(updateStatusBar),
@@ -119,6 +113,21 @@ async function type(editor: vscode.TextEditor, _edit: vscode.TextEditorEdit, arg
 	return vscode.commands.executeCommand('default:type', args);
 }
 
+function promptLibraryLocation() {
+	vscode.window.showInformationMessage(`Liner pattern library location is currently set to '${_state.config.libraryLocation}', would you like to update it now? (you can always change this later under Settings)`, 'Yes', 'No', "I don't want a pattern library").then(answer => {
+		if (answer === 'Yes') {
+			vscode.window.showOpenDialog({ canSelectFolders: true, title: 'Select Pattern Library Location' }).then(uris => {
+				if (uris && uris[0]) {
+					_state.config.update('libraryLocation', uris[0].fsPath, true);
+				}
+			});
+		} else if (answer !== 'No') {
+			// The "I don't want a pattern library" option.
+			_state.config.update('libraryLocation', NO_LOCATION, true);
+		}
+	});
+}
+
 // Get whether the document in the editor has Liner enabled.
 function getEnabled(editor: vscode.TextEditor): boolean {
 	if (_state.enabled.get(editor.document.uri.toString()) === undefined) {
@@ -172,11 +181,12 @@ function reloadConfig(): void {
 async function loadPatterns(): Promise<void> {
 	_state.patterns = [];
 	const patternNames: string[] = _state.config.patterns.split(/[,;]/);
+	const libraryConfigured: boolean = _state.config.libraryLocation && _state.config.libraryLocation !== NO_LOCATION;
 	for (let patternName of patternNames) {
 		const trimmed = patternName.trim();
 		let loaded;
 		// Try the user's library location first.
-		if (_state.config.libraryLocation && _state.config.libraryLocation !== 'none') {
+		if (libraryConfigured) {
 			try {
 				loaded = await import(path.join(_state.config.libraryLocation, trimmed));
 				_state.channel.appendLine(`${loaded.patterns.length} pattern(s) loaded from '${trimmed}'`);

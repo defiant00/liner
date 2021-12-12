@@ -21,8 +21,14 @@ To trigger Liner:
   * VS Code multiple cursors and selections are supported.
 * Make a selection and hit **Enter**.
 
-Liner can be toggled through the `Toggle Liner` command, or by clicking on the status bar at the bottom.  
+Liner can be toggled through the `Liner: Toggle` command, or by clicking on the status bar at the bottom.  
 ![Status Bar Screenshot](/images/status_bar.png)
+
+## Commands
+
+* `Liner: Toggle` - Toggle Liner for the current file.
+* `Liner: Reload Patterns` - Reload all pattern libraries, useful when developing new patterns.
+* `Liner: Set Pattern Library Location` - Display the pattern library location prompt.
 
 ## Sample Pattern Library
 
@@ -34,7 +40,7 @@ The sample pattern library `defiant00/alpha-code` contains the following pattern
 
 As well, the following are replaced inline:
 * `and` -> `&&`
-* `or` -> `\|\|`
+* `or` -> `||`
 * `eq` -> `===`
 * `neq` -> `!==`
 
@@ -100,6 +106,10 @@ Bug fixes and new pattern libraries are both welcome, please send a pull request
 Liner may conflict with other extensions that intercept individual **type** events.
 
 ## Release Notes
+
+### 1.1.0
+
+* Added `Liner: Reload Patterns` and `Liner: Set Pattern Library Location` commands
 
 ### 1.0.1
 
